@@ -6,12 +6,15 @@
 // - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
 // - Introduction, links and more at the top of imgui.cpp
 
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
 #include <d3d11.h>
 #include <tchar.h>
 #include <iostream>
+#include <cstdlib>
+#include <Windows.h>
+
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
 
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -19,9 +22,6 @@ static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
 static IDXGISwapChain* g_pSwapChain = nullptr;
 static UINT                     g_ResizeWidth = 0, g_ResizeHeight = 0;
 static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
-
-// Global Variables
-const unsigned int g_processId = 31008;
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -124,17 +124,7 @@ int main(int, char**)
 
     // Main window for the trainer
     {
-      ImGui::Begin("RE:CVX Trainer - v0.0.0");
-
-      ImGui::Text("Resident Evil Code Veronica Trainer.");
-      ImGui::Text("The trainer is used to manipulate certain aspects of the trainer.");
-      ImGui::Text("Some features may be lacking whilst the trainer is still in development.");
-
-      ImGui::Text("Enter Process ID: ");
-      
-      ImGui::Text("PID: %d", g_processId);
-
-      
+      ImGui::Begin("--TEMPLATE---");
 
       ImGui::End();
     }
@@ -259,3 +249,5 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
   }
   return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
+
+
