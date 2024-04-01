@@ -23,11 +23,16 @@ static IDXGISwapChain* g_pSwapChain = nullptr;
 static UINT                     g_ResizeWidth = 0, g_ResizeHeight = 0;
 static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
 
+// Global Variables
+unsigned int g_processId = 0;
+const LPCVOID g_address = (LPCVOID)0x20433378;
+
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
+void ReadMemory(HWND hWnd);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Main code
@@ -124,7 +129,19 @@ int main(int, char**)
 
     // Main window for the trainer
     {
-      ImGui::Begin("--TEMPLATE---");
+      ImGui::Begin("RECVX Trainer - v0.0.0");
+
+      ImGui::Text("Resident Evil Code Veronica Trainer.");
+      ImGui::Text("The trainer is used to manipulate certain aspects of the trainer.");
+      ImGui::Text("Some features may be lacking whilst the trainer is still in development.");
+
+      static char buf1[32] = "";
+      ImGui::Text("Process ID: ");
+      ImGui::SameLine();
+      ImGui::InputText(" ", buf1, 32);
+      g_processId = std::atoi(buf1);
+      ImGui::Text("Process ID is: %d", g_processId);
+      ReadMemory(hwnd);
 
       ImGui::End();
     }
@@ -248,6 +265,22 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
   }
   return ::DefWindowProcW(hWnd, msg, wParam, lParam);
+}
+
+void ReadMemory(HWND hWnd)
+{
+  HANDLE hProcess = OpenProcess(PROCESS_VM_READ /* | PROCESS_VM_READ | PROCESS_VM_OPERATION*/, false, g_processId);
+  unsigned short buffer;
+  SIZE_T bytesRead;
+
+  if (ReadProcessMemory(hProcess, g_address, &buffer, sizeof(buffer), &bytesRead))
+  {
+    //std::cout << L"Original value at address: " << std::hex << g_address << L" is: " << std::dec << buffer << std::endl;
+    ImGui::Text("Address [%x] contains the value [%d]", g_address, buffer);
+  }
+  else
+    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Unable to read memory!");
+
 }
 
 
