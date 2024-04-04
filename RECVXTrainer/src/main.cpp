@@ -97,9 +97,9 @@ int main(int, char**)
 
   
   std::wstring ProcessName = L"pcsx2.exe";
-  DWORD pid = GetProcessByName(ProcessName);
-  if (pid != 0)
-    std::wcout << L"Found Process with PID: " << pid << std::endl;
+  DWORD g_processId = GetProcessByName(ProcessName);
+  if (g_processId != 0)
+    std::wcout << L"Found Process with PID: " << g_processId << std::endl;
   else
     std::wcout << L"Process Not Found..." << std::endl;
 
@@ -146,7 +146,7 @@ int main(int, char**)
       ImGui::Text("The trainer is used to manipulate certain aspects of the trainer.");
       ImGui::Text("Some features may be lacking whilst the trainer is still in development.");
 
-      ImGui::Text("Process ID is: %d", pid);
+      ImGui::Text("Process ID is: %d", g_processId);
       ReadMemory(hwnd);
 
       ImGui::End();
@@ -275,7 +275,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void ReadMemory(HWND hWnd)
 {
-  HANDLE hProcess = OpenProcess(PROCESS_VM_READ /* | PROCESS_VM_READ | PROCESS_VM_OPERATION*/, false, pid);
+  HANDLE hProcess = OpenProcess(PROCESS_VM_READ /* | PROCESS_VM_READ | PROCESS_VM_OPERATION*/, false, g_processId);
   unsigned short buffer;
   SIZE_T bytesRead;
 
