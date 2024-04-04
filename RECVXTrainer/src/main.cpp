@@ -34,7 +34,8 @@ bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
-void ReadMemory(HWND hWnd);
+void ReadMemory(DWORD processId);
+void WriteMemory(DWORD processId, unsigned short newVal);
 DWORD GetProcessByName(const std::wstring& processName);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -99,9 +100,9 @@ int main(int, char**)
   std::wstring ProcessName = L"pcsx2.exe";
   DWORD g_processId = GetProcessByName(ProcessName);
   if (g_processId != 0)
-    std::wcout << L"Found Process with PID: " << g_processId << std::endl;
+    std::wcout << L"Found Process name[" << ProcessName << "] with the ProcessID[" << g_processId << "]" << std::endl;
   else
-    std::wcout << L"Process Not Found..." << std::endl;
+    std::wcout << L"Process  '" << ProcessName << "' not found!" << std::endl;
 
   // Main loop
   bool done = false;
@@ -147,7 +148,11 @@ int main(int, char**)
       ImGui::Text("Some features may be lacking whilst the trainer is still in development.");
 
       ImGui::Text("Process ID is: %d", g_processId);
-      ReadMemory(hwnd);
+      ReadMemory(g_processId);      
+      static int val = 0;
+      ImGui::Text("Change Value: ");
+      ImGui::InputInt("Change Address Value", &val);
+      WriteMemory(g_processId, val);
 
       ImGui::End();
     }
@@ -273,9 +278,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-void ReadMemory(HWND hWnd)
+void ReadMemory(DWORD processId)
 {
-  HANDLE hProcess = OpenProcess(PROCESS_VM_READ /* | PROCESS_VM_READ | PROCESS_VM_OPERATION*/, false, g_processId);
+  HANDLE hProcess = OpenProcess(PROCESS_VM_READ /* | PROCESS_VM_READ | PROCESS_VM_OPERATION*/, false, processId);
   unsigned short buffer;
   SIZE_T bytesRead;
 
@@ -287,6 +292,18 @@ void ReadMemory(HWND hWnd)
   else
     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Unable to read memory!");
 
+}
+
+void WriteMemory(DWORD processId, unsigned short newVal)
+{
+  HANDLE hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
+  SIZE_T bytesRead;
+  if (WriteProcessMemory(hProcess, (LPVOID)g_address, &newVal, sizeof(newVal), NULL))
+    std::wcout << "New value written to address " << std::hex << g_address << std::endl;
+  else
+    std::cerr << "Failed to write memory!" << std::endl;
+
+  CloseHandle(hProcess);
 }
 
 DWORD GetProcessByName(const std::wstring& processName)
