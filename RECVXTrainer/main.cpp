@@ -10,7 +10,9 @@
 #include <tchar.h>
 #include <iostream>
 #include <cstdlib>
+#include <tlhelp32.h>
 #include <Windows.h>
+#include <vector>
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -33,6 +35,7 @@ void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
 void ReadMemory(HWND hWnd);
+DWORD GetProcessByName(const std::wstring& processName);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Main code
@@ -92,6 +95,14 @@ int main(int, char**)
   bool show_another_window = false;
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+  
+  std::wstring ProcessName = L"pcsx2.exe";
+  DWORD pid = GetProcessByName(ProcessName);
+  if (pid != 0)
+    std::wcout << L"Found Process with PID: " << pid << std::endl;
+  else
+    std::wcout << L"Process Not Found..." << std::endl;
+
   // Main loop
   bool done = false;
   while (!done)
@@ -135,12 +146,7 @@ int main(int, char**)
       ImGui::Text("The trainer is used to manipulate certain aspects of the trainer.");
       ImGui::Text("Some features may be lacking whilst the trainer is still in development.");
 
-      static char buf1[32] = "";
-      ImGui::Text("Process ID: ");
-      ImGui::SameLine();
-      ImGui::InputText(" ", buf1, 32);
-      g_processId = std::atoi(buf1);
-      ImGui::Text("Process ID is: %d", g_processId);
+      ImGui::Text("Process ID is: %d", pid);
       ReadMemory(hwnd);
 
       ImGui::End();
@@ -281,6 +287,29 @@ void ReadMemory(HWND hWnd)
   else
     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Unable to read memory!");
 
+}
+
+DWORD GetProcessByName(const std::wstring& processName)
+{
+  HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  PROCESSENTRY32 pe;
+  pe.dwSize = sizeof(PROCESSENTRY32);
+  DWORD processId = 0;
+
+  if (Process32First(snapshot, &pe))
+  {
+    do
+    {
+      if (_wcsicmp(pe.szExeFile, processName.c_str()) == 0)
+      {
+        processId = pe.th32ProcessID;
+        break;
+      }
+    } while (Process32Next(snapshot, &pe));
+  }
+
+  CloseHandle(snapshot);
+  return processId;
 }
 
 
