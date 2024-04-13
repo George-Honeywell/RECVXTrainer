@@ -41,6 +41,9 @@ std::string GetItemByName(int item)
 	case 11:
 		return "Linear Launcher";
 
+	case 12:
+		return "Handgun Bullets";
+
 	default:
 		return "Item ID not found...";
 	}
