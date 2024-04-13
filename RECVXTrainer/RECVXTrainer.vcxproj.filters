@@ -68,5 +68,8 @@
     <ClInclude Include="src\items.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\MemoryStorage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

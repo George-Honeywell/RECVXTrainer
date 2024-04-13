@@ -18,6 +18,7 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include "items.h"
+#include "MemoryStorage.h"
 
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -35,7 +36,7 @@ bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
-void ReadMemory(DWORD processId, LPCVOID address);
+void ReadPlayerInventory(DWORD processId, LPCVOID slotAddress, LPCVOID slotQuantity, LPCVOID slotFlags);
 void WriteMemory(DWORD processId, unsigned short newVal);
 DWORD GetProcessByName(const std::wstring& processName);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -149,7 +150,7 @@ int main(int, char**)
       ImGui::Text("Some features may be lacking whilst the trainer is still in development.");
 
       ImGui::Text("Process ID is: %d", g_processId);
-      ReadMemory(g_processId);      
+      //ReadMemory(g_processId);      
       static int val = 0;
       //ImGui::InputInt("Change Address Value", &val);
       //WriteMemory(g_processId, val);
@@ -167,7 +168,7 @@ int main(int, char**)
       //    }
       //  }
       //}
-
+      MemoryStorage memoryStorage;
       if (ImGui::CollapsingHeader("Claire Inventory"))
       {
         if (ImGui::TreeNode("Slot 0 - Personal Slot"))
@@ -177,8 +178,11 @@ int main(int, char**)
 
         if (ImGui::TreeNode("Slot 1"))
         {
-          const LPCVOID address = (LPCVOID)0x2043337A;
-          ReadMemory(hwnd, address);
+          ReadPlayerInventory(
+            g_processId, 
+            memoryStorage.m_claireInvent.m_slotOne, 
+            memoryStorage.m_claireInvent.m_slotOneQuantity, 
+            memoryStorage.m_claireInvent.m_slotOneFlags);
 
           ImGui::TreePop();
         }
@@ -353,19 +357,33 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-void ReadMemory(DWORD processId, LPCVOID address)
+void ReadPlayerInventory(DWORD processId, LPCVOID slotAddress, LPCVOID slotQuantity, LPCVOID slotFlags)
 {
   HANDLE hProcess = OpenProcess(PROCESS_VM_READ /* | PROCESS_VM_READ | PROCESS_VM_OPERATION*/, false, processId);
   unsigned short buffer;
   SIZE_T bytesRead;
-
-  if (ReadProcessMemory(hProcess, address, &buffer, sizeof(buffer), &bytesRead))
+  
+  if (ReadProcessMemory(hProcess, slotAddress, &buffer, sizeof(buffer), &bytesRead))
   {
-    //std::cout << L"Original value at address: " << std::hex << g_address << L" is: " << std::dec << buffer << std::endl;
-    ImGui::Text("Address [%x] contains the value 0x%02X", address, buffer);
+    ImGui::Text("Address [%X] contains the value 0x%02X", slotAddress, buffer);
+    ImGui::Text("Slot contains item: %s", GetItemByName(buffer).c_str());
   }
   else
     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Unable to read memory!");
+
+  //if (ReadProcessMemory(hProcess, slotQuantity, &buffer, sizeof(buffer), &bytesRead))
+  //{
+  //  ImGui::Text("Item Slot Quantity: %i", buffer);
+  //}
+  //else
+  //  ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Unable to read memory!");
+
+  //if (ReadProcessMemory(hProcess, slotFlags, &buffer, sizeof(buffer), &bytesRead))
+  //{
+  //  ImGui::Text("Item Slot Flags: %i", buffer - 256);
+  //}
+  //else
+  //  ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Unable to read memory!");
 }
 
 void WriteMemory(DWORD processId, LPCVOID address, unsigned short newVal)
