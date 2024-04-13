@@ -17,6 +17,7 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
+#include "items.h"
 
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -27,14 +28,14 @@ static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
 
 // Global Variables
 unsigned int g_processId = 0;
-const LPCVOID g_address = (LPCVOID)0x20433378;
+//const LPCVOID g_address = (LPCVOID)0x2043337B;
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
-void ReadMemory(DWORD processId);
+void ReadMemory(DWORD processId, LPCVOID address);
 void WriteMemory(DWORD processId, unsigned short newVal);
 DWORD GetProcessByName(const std::wstring& processName);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -141,7 +142,7 @@ int main(int, char**)
 
     // Main window for the trainer
     {
-      ImGui::Begin("RECVX Trainer - v0.0.0");
+      ImGui::Begin("RECVX Trainer");
 
       ImGui::Text("Resident Evil Code Veronica Trainer.");
       ImGui::Text("The trainer is used to manipulate certain aspects of the trainer.");
@@ -150,9 +151,83 @@ int main(int, char**)
       ImGui::Text("Process ID is: %d", g_processId);
       ReadMemory(g_processId);      
       static int val = 0;
-      ImGui::Text("Change Value: ");
-      ImGui::InputInt("Change Address Value", &val);
-      WriteMemory(g_processId, val);
+      //ImGui::InputInt("Change Address Value", &val);
+      //WriteMemory(g_processId, val);
+      
+
+      //if (ImGui::CollapsingHeader("Claire Inventory"))
+      //{
+      //  for (int i = 0; i < 12; i++)
+      //  {
+      //    if (ImGui::TreeNode((void*)(intptr_t)i, "Slot %d", i))
+      //    {
+      //      ImGui::Text("Test");
+
+      //      ImGui::TreePop();
+      //    }
+      //  }
+      //}
+
+      if (ImGui::CollapsingHeader("Claire Inventory"))
+      {
+        if (ImGui::TreeNode("Slot 0 - Personal Slot"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 1"))
+        {
+          const LPCVOID address = (LPCVOID)0x2043337A;
+          ReadMemory(hwnd, address);
+
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 2"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 3"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 4"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 5"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 6"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 7"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 8"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 9 - Side Pack"))
+        {
+          ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Slot 10 - Side Pack"))
+        {
+          ImGui::TreePop();
+        }
+      }
 
       ImGui::End();
     }
@@ -278,28 +353,27 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-void ReadMemory(DWORD processId)
+void ReadMemory(DWORD processId, LPCVOID address)
 {
   HANDLE hProcess = OpenProcess(PROCESS_VM_READ /* | PROCESS_VM_READ | PROCESS_VM_OPERATION*/, false, processId);
   unsigned short buffer;
   SIZE_T bytesRead;
 
-  if (ReadProcessMemory(hProcess, g_address, &buffer, sizeof(buffer), &bytesRead))
+  if (ReadProcessMemory(hProcess, address, &buffer, sizeof(buffer), &bytesRead))
   {
     //std::cout << L"Original value at address: " << std::hex << g_address << L" is: " << std::dec << buffer << std::endl;
-    ImGui::Text("Address [%x] contains the value [%d]", g_address, buffer);
+    ImGui::Text("Address [%x] contains the value 0x%02X", address, buffer);
   }
   else
     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Unable to read memory!");
-
 }
 
-void WriteMemory(DWORD processId, unsigned short newVal)
+void WriteMemory(DWORD processId, LPCVOID address, unsigned short newVal)
 {
   HANDLE hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
   SIZE_T bytesRead;
-  if (WriteProcessMemory(hProcess, (LPVOID)g_address, &newVal, sizeof(newVal), NULL))
-    std::wcout << "New value written to address " << std::hex << g_address << std::endl;
+  if (WriteProcessMemory(hProcess, (LPVOID)address, &newVal, sizeof(newVal), NULL))
+    std::wcout << "New value written to address " << std::hex << address << std::endl;
   else
     std::cerr << "Failed to write memory!" << std::endl;
 
